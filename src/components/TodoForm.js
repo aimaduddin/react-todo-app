@@ -2,11 +2,15 @@ import React, { useState } from 'react';
 
 function TodoForm({ addTodo }) {
   const [input, setInput] = useState('');
+  const [dueDate, setDueDate] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    addTodo(input);
-    setInput('');
+    if (input.trim()) {
+      addTodo(input, dueDate);
+      setInput('');
+      setDueDate('');
+    }
   };
 
   return (
@@ -16,13 +20,19 @@ function TodoForm({ addTodo }) {
         value={input}
         onChange={(e) => setInput(e.target.value)}
         placeholder="Add a todo"
-        className="w-full p-2 border border-gray-300 rounded-md mr-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full p-2 border border-gray-300 rounded-md mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+      <input
+        type="date"
+        value={dueDate}
+        onChange={(e) => setDueDate(e.target.value)}
+        className="w-full p-2 border border-gray-300 rounded-md mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
       <button 
         type="submit"
-        className="w-full mt-2 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+        className="w-full bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
       >
-        Add
+        Add Todo
       </button>
     </form>
   );

@@ -15,9 +15,9 @@ function App() {
     localStorage.setItem('todos', JSON.stringify(todos));
   }, [todos]);
 
-  const addTodo = (text) => {
+  const addTodo = (text, dueDate) => {
     if (text) {
-      setTodos([...todos, { id: Date.now(), text, completed: false }]);
+      setTodos([...todos, { id: Date.now(), text, completed: false, dueDate }]);
     }
   };
 
@@ -35,7 +35,7 @@ function App() {
     if (filter === 'Active') return !todo.completed;
     if (filter === 'Completed') return todo.completed;
     return true;
-  });
+  }).sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
 
   return (
     <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-xl">
