@@ -1,6 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, where } from 'firebase/firestore';
-import { auth, db } from './firebase';
+import { 
+  collection, 
+  query, 
+  where, 
+  orderBy, 
+  onSnapshot, 
+  addDoc, 
+  updateDoc, 
+  deleteDoc, 
+  doc, 
+  serverTimestamp 
+} from 'firebase/firestore';
+import { db, auth } from './firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import TodoForm from './components/TodoForm';
 import TodoList from './components/TodoList';
@@ -11,12 +22,27 @@ function App() {
   const [user, setUser] = useState(null);
   const [todos, setTodos] = useState([]);
   const [filter, setFilter] = useState('All');
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+      console.log("Auth state changed. User:", user ? user.uid : "No user");
     });
     return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, []);
 
   useEffect(() => {
@@ -24,25 +50,42 @@ function App() {
       const q = query(
         collection(db, 'todos'),
         where('userId', '==', user.uid),
-        orderBy('dueDate')
+        orderBy('createdAt', 'desc')
       );
+
       const unsubscribe = onSnapshot(q, (snapshot) => {
-        setTodos(snapshot.docs.map(doc => ({id: doc.id, ...doc.data()})));
+        const newTodos = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setTodos(newTodos);
+      }, (error) => {
+        console.error("Error fetching todos:", error);
       });
+
       return () => unsubscribe();
     } else {
       setTodos([]);
     }
   }, [user]);
 
-  const addTodo = async (text, dueDate) => {
-    if (text && user) {
-      await addDoc(collection(db, 'todos'), {
-        text,
-        completed: false,
-        dueDate: dueDate || null,
-        userId: user.uid
-      });
+  const addTodo = async (text) => {
+    if (!user) {
+      console.error("User is not authenticated");
+      return;
+    }
+    if (text) {
+      try {
+        const docRef = await addDoc(collection(db, 'todos'), {
+          text,
+          completed: false,
+          userId: user.uid,
+          createdAt: serverTimestamp()
+        });
+        console.log("Document written with ID: ", docRef.id);
+      } catch (error) {
+        console.error("Error adding todo:", error.code, error.message);
+      }
     }
   };
 
@@ -78,6 +121,7 @@ function App() {
       <TodoForm addTodo={addTodo} />
       <TodoFilter filter={filter} setFilter={setFilter} />
       <TodoList todos={filteredTodos} toggleTodo={toggleTodo} deleteTodo={deleteTodo} />
+      {isOffline && <div className="bg-yellow-100 p-2 text-center">You are offline. Some features may be limited.</div>}
     </div>
   );
 }
