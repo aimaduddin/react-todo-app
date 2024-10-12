@@ -2,6 +2,10 @@
 
 A feature-rich Todo application built with React and Firebase, featuring authentication, real-time updates, and offline capabilities.
 
+## Demo
+
+Check out the live demo of the app: [React Todo App Demo](https://dudedean-todoapp.netlify.app/)
+
 ## Features
 
 - User Authentication (Email/Password and Google Sign-In)
